@@ -22,17 +22,28 @@ struct Cli {
     #[structopt(short, long)]
     debug: bool,
 
-    #[structopt()]
-    repo: String,
-
     #[structopt(subcommand)]
-    cmd: Option<Togit>,
+    cmd: Togit,
+}
+
+macro_rules! ternary {
+    ($c:expr, $v:expr, $v1:expr) => {
+        if $c {
+            $v
+        } else {
+            $v1
+        }
+    };
 }
 
 #[derive(Debug, StructOpt)]
 #[structopt()]
 enum Togit {
     Init,
+    Toggle {
+        #[structopt(name = "repo", required = true)]
+        repo: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -70,13 +81,47 @@ struct Repo {
 }
 fn main() -> Result<()> {
     env_logger::init();
-    let cli = Cli::from_args();
+    let args: Cli = Cli::from_args();
+
     let config_path = get_global_config_path();
 
-    if cli.cmd.is_some() {
-        initialize_togit(&config_path)?;
+    match args.cmd {
+        Togit::Init => initialize_togit(&config_path)?,
+        Togit::Toggle { repo } => toggle(&config_path, repo)?,
     }
+    Ok(())
+}
 
+fn get_togit_home_dir() -> PathBuf {
+    match env::var("TOGIT_HOME") {
+        Ok(value) => {
+            info!("Using \'TOGIT_HOME\' {}", value);
+            Path::new(&value).to_path_buf()
+        }
+        Err(_) => {
+            info!("did not found \'TOGIT_HOME\'. using default");
+            dirs::home_dir()
+                .expect("could not find home directory")
+                .join(".togit")
+        }
+    }
+}
+
+fn get_global_config_path() -> PathBuf {
+    let home_dir = get_togit_home_dir();
+    let config_path = home_dir.join("config").join(TOGIT_CONFIG_FILE_NAME);
+    info!("Using global config file: {}", config_path.display());
+    config_path
+}
+
+fn get_user_input(prompt: &str) -> String {
+    eprint!("{}", prompt);
+    let mut input: String = read!("{}\n");
+    input.truncate(input.trim_end().len());
+    input
+}
+
+fn toggle(config_path: &PathBuf, repos: String) -> Result<()> {
     if !config_path.exists() {
         bail!(
             "config path does not exist {}. try running `togit init`",
@@ -89,7 +134,7 @@ fn main() -> Result<()> {
     let request_url = format!(
         "https://api.github.com/repos/{owner}/{repo}",
         owner = config.owner,
-        repo = cli.repo
+        repo = repos
     );
 
     let client = reqwest::blocking::Client::new();
@@ -149,6 +194,8 @@ fn main() -> Result<()> {
             "public"
         }
     );
+    let info = ternary!(patch_response.private, "private", "public");
+    println!("{} toggled to: {}", repos, info);
     Ok(())
 }
 
@@ -160,33 +207,4 @@ fn initialize_togit(config_path: &PathBuf) -> Result<()> {
     let config = Config { token, owner };
     config.to_file(&config_path)?;
     Ok(())
-}
-
-fn get_togit_home_dir() -> PathBuf {
-    match env::var("TOGIT_HOME") {
-        Ok(value) => {
-            info!("Using \'TOGIT_HOME\' {}", value);
-            Path::new(&value).to_path_buf()
-        }
-        Err(_) => {
-            info!("did not found \'TOGIT_HOME\'. using default");
-            dirs::home_dir()
-                .expect("could not find home directory")
-                .join(".togit")
-        }
-    }
-}
-
-fn get_global_config_path() -> PathBuf {
-    let home_dir = get_togit_home_dir();
-    let config_path = home_dir.join("config").join(TOGIT_CONFIG_FILE_NAME);
-    info!("Using global config file: {}", config_path.display());
-    config_path
-}
-
-fn get_user_input(prompt: &str) -> String {
-    eprint!("{}", prompt);
-    let mut input: String = read!("{}\n");
-    input.truncate(input.trim_end().len());
-    input
 }
