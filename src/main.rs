@@ -22,7 +22,7 @@ struct Cli {
     #[structopt(short, long)]
     debug: bool,
 
-    #[structopt(required = true)]
+    #[structopt()]
     repo: String,
 
     #[structopt(subcommand)]
@@ -190,28 +190,3 @@ fn get_user_input(prompt: &str) -> String {
     input.truncate(input.trim_end().len());
     input
 }
-
-// curl \
-//   -X PATCH \
-//   -H "Accept: application/vnd.github.v3+json" \
-//   https://api.github.com/repos/octocat/hello-world \
-//   -d '{"name":"name"}'
-
-//  let res = client
-//         .get("https://api.github.com/repos/sachinmaharana/rkill")
-//         .header(AUTHORIZATION, auth)
-//         .json(&serde_json::json!({
-//             "private": "true"}
-//         ))
-//         .send()?;
-
-// let client = reqwest::blocking::Client::new();
-//     let auth = format!("token {}", config.token);
-//     let request_url = format!("https://api.github.com/repos/sachinmaharana/rkill");
-//     println!("{}", request_url);
-//     dbg!(&auth);
-//     let res = client
-//         .get(&request_url)
-//         // .header(AUTHORIZATION, auth)
-//         .send()?;
-//     println!("{:?}", res);
