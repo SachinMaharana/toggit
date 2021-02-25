@@ -2,12 +2,13 @@ use anyhow::{bail, Result};
 use billboard::Billboard;
 use log::info;
 
+use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::{
     env,
     path::{Path, PathBuf},
 };
+use std::{fs, str::FromStr};
 use structopt::StructOpt;
 use text_io::read;
 
@@ -21,6 +22,9 @@ struct Cli {
     #[structopt(short, long)]
     debug: bool,
 
+    #[structopt(required = true)]
+    repo: String,
+
     #[structopt(subcommand)]
     cmd: Option<Togit>,
 }
@@ -31,9 +35,10 @@ enum Togit {
     Init,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 struct Config {
     token: String,
+    owner: String,
 }
 
 impl Config {
@@ -43,8 +48,26 @@ impl Config {
         fs::write(path, toml)?;
         Ok(())
     }
+
+    fn get_config(&self, config_path: &PathBuf) -> Result<Config> {
+        // Ok(Config::from_str(&fs::read_to_string(&config_path)?)?)
+        fs::read_to_string(&config_path)
+            .map_err(|e| e.into())
+            .and_then(|contents| Config::from_str(&contents).map_err(|e| e.into()))
+    }
 }
 
+impl FromStr for Config {
+    type Err = toml::de::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        toml::from_str(s)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+struct Response {
+    private: bool,
+}
 fn main() -> Result<()> {
     env_logger::init();
     let cli = Cli::from_args();
@@ -61,6 +84,49 @@ fn main() -> Result<()> {
         )
     }
 
+    let config = Config::default().get_config(&config_path)?;
+
+    let request_url = format!(
+        "https://api.github.com/repos/{owner}/{repo}",
+        owner = config.owner,
+        repo = cli.repo
+    );
+
+    let client = reqwest::blocking::Client::new();
+
+    let response = {
+        let response = client
+            .get(&request_url)
+            .header(
+                AUTHORIZATION,
+                format!("token {token}", token = config.token),
+            )
+            .header(USER_AGENT, &config.owner)
+            .send()?;
+        if response.status() != 200 {
+            bail!("{}", response.text()?);
+        }
+        let response: Response = response.json()?;
+        response
+    };
+
+    let response_struct = Response {
+        private: !response.private,
+    };
+
+    let res = client
+        .patch(&request_url)
+        .header(
+            AUTHORIZATION,
+            format!("token {token}", token = config.token),
+        )
+        .header(USER_AGENT, config.owner)
+        .json(&serde_json::json!(response_struct))
+        .send()?;
+
+    if res.status() != 200 {
+        println!("Error: {}", res.text()?);
+    }
     Ok(())
 }
 
@@ -68,7 +134,8 @@ fn initialize_togit(config_path: &PathBuf) -> Result<()> {
     let url = "https://github.com/settings/tokens";
     Billboard::default().display(format!("To find your github token, go to {}", url).as_str());
     let token = get_user_input("Enter API Token:\n");
-    let config = Config { token };
+    let owner = get_user_input("Enter Owner Name:\n");
+    let config = Config { token, owner };
     config.to_file(&config_path)?;
     Ok(())
 }
@@ -101,3 +168,28 @@ fn get_user_input(prompt: &str) -> String {
     input.truncate(input.trim_end().len());
     input
 }
+
+// curl \
+//   -X PATCH \
+//   -H "Accept: application/vnd.github.v3+json" \
+//   https://api.github.com/repos/octocat/hello-world \
+//   -d '{"name":"name"}'
+
+//  let res = client
+//         .get("https://api.github.com/repos/sachinmaharana/rkill")
+//         .header(AUTHORIZATION, auth)
+//         .json(&serde_json::json!({
+//             "private": "true"}
+//         ))
+//         .send()?;
+
+// let client = reqwest::blocking::Client::new();
+//     let auth = format!("token {}", config.token);
+//     let request_url = format!("https://api.github.com/repos/sachinmaharana/rkill");
+//     println!("{}", request_url);
+//     dbg!(&auth);
+//     let res = client
+//         .get(&request_url)
+//         // .header(AUTHORIZATION, auth)
+//         .send()?;
+//     println!("{:?}", res);
