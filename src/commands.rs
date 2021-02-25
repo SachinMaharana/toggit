@@ -95,15 +95,9 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
         let response: Repo = response.json()?;
         response
     };
+    let info = ternary!(response.private, "private", "public");
 
-    info!(
-        "Current: {}",
-        if response.private {
-            "private"
-        } else {
-            "public"
-        }
-    );
+    info!("{}: current: {}", repos, info);
 
     let repo = Repo {
         private: !response.private,
@@ -121,15 +115,10 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
         patch_response
     };
 
-    info!(
-        "Toggled to: {}",
-        if patch_response.private {
-            "private"
-        } else {
-            "public"
-        }
-    );
     let info = ternary!(patch_response.private, "private", "public");
-    println!("{} toggled to: {}", repos, info);
+
+    info!("{}: toggled to: {}", repos, info);
+
+    eprintln!("{} toggled to: {}", repos, info);
     Ok(())
 }

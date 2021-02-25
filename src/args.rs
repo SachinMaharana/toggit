@@ -7,7 +7,7 @@ use structopt::StructOpt;
 )]
 pub struct Cli {
     #[structopt(short, long)]
-    debug: bool,
+    pub verbose: bool,
 
     #[structopt(subcommand)]
     pub cmd: Togit,
