@@ -1,11 +1,12 @@
 use anyhow::{bail, Result};
 use billboard::Billboard;
 use log::info;
-use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::{fs, str::FromStr};
 use text_io::read;
+
+use crate::utils::{self, MethodType};
 
 macro_rules! ternary {
     ($c:expr, $v:expr, $v1:expr) => {
@@ -18,9 +19,9 @@ macro_rules! ternary {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-struct Config {
-    token: String,
-    owner: String,
+pub struct Config {
+    pub token: String,
+    pub owner: String,
 }
 
 impl FromStr for Config {
@@ -38,7 +39,7 @@ impl Config {
         Ok(())
     }
 
-    fn get_config(&self, config_path: &PathBuf) -> Result<Config> {
+    fn get_config(&self, config_path: &Path) -> Result<Config> {
         // Ok(Config::from_str(&fs::read_to_string(&config_path)?)?)
         fs::read_to_string(&config_path)
             .map_err(|e| e.into())
@@ -46,7 +47,7 @@ impl Config {
     }
 }
 
-pub fn initialize_togit(config_path: &PathBuf) -> Result<()> {
+pub fn initialize_togit(config_path: &Path) -> Result<()> {
     let url = "https://github.com/settings/tokens";
     Billboard::default().display(format!("To find your github token, go to {}", url).as_str());
     let token = get_user_input("Enter API Token:\n");
@@ -68,7 +69,7 @@ struct Repo {
     private: bool,
 }
 
-pub fn toggle(config_path: &PathBuf, repos: String) -> Result<()> {
+pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
     if !config_path.exists() {
         bail!(
             "config path does not exist {}. try running `togit init`",
@@ -76,7 +77,7 @@ pub fn toggle(config_path: &PathBuf, repos: String) -> Result<()> {
         )
     }
 
-    let config = Config::default().get_config(&config_path)?;
+    let config = Config::default().get_config(config_path)?;
 
     let request_url = format!(
         "https://api.github.com/repos/{owner}/{repo}",
@@ -84,17 +85,10 @@ pub fn toggle(config_path: &PathBuf, repos: String) -> Result<()> {
         repo = repos
     );
 
-    let client = reqwest::blocking::Client::new();
+    let toggit_client = utils::get_client(&request_url, config);
 
     let response = {
-        let response = client
-            .get(&request_url)
-            .header(
-                AUTHORIZATION,
-                format!("token {token}", token = config.token),
-            )
-            .header(USER_AGENT, &config.owner)
-            .send()?;
+        let response = toggit_client(MethodType::Get).send()?;
         if response.status() != 200 {
             bail!("{}", response.text()?);
         }
@@ -116,13 +110,7 @@ pub fn toggle(config_path: &PathBuf, repos: String) -> Result<()> {
     };
 
     let patch_response = {
-        let patch_response = client
-            .patch(&request_url)
-            .header(
-                AUTHORIZATION,
-                format!("token {token}", token = config.token),
-            )
-            .header(USER_AGENT, config.owner)
+        let patch_response = toggit_client(MethodType::Patch)
             .json(&serde_json::json!(repo))
             .send()?;
 

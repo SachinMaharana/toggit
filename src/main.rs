@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate maplit;
+
 use anyhow::Result;
 
 use args::{get_cli, Togit};
@@ -16,7 +19,7 @@ fn main() -> Result<()> {
 
     match cli.cmd {
         Togit::Init => initialize_togit(&config_path)?,
-        Togit::Toggle { repo } => toggle(&config_path, repo)?,
+        Togit::Toggle { repo } => toggle(&config_path, &repo)?,
     }
     Ok(())
 }

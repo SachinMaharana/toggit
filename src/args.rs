@@ -15,7 +15,9 @@ pub struct Cli {
 #[derive(Debug, StructOpt)]
 #[structopt()]
 pub enum Togit {
+    #[structopt(about = "Initialize toggit")]
     Init,
+    #[structopt(about = "toggle a repo to private or public")]
     Toggle {
         #[structopt(name = "repo", required = true)]
         repo: String,
