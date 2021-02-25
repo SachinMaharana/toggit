@@ -65,7 +65,7 @@ impl FromStr for Config {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-struct Response {
+struct Repo {
     private: bool,
 }
 fn main() -> Result<()> {
@@ -106,27 +106,49 @@ fn main() -> Result<()> {
         if response.status() != 200 {
             bail!("{}", response.text()?);
         }
-        let response: Response = response.json()?;
+        let response: Repo = response.json()?;
         response
     };
 
-    let response_struct = Response {
+    info!(
+        "Current: {}",
+        if response.private {
+            "private"
+        } else {
+            "public"
+        }
+    );
+
+    let repo = Repo {
         private: !response.private,
     };
 
-    let res = client
-        .patch(&request_url)
-        .header(
-            AUTHORIZATION,
-            format!("token {token}", token = config.token),
-        )
-        .header(USER_AGENT, config.owner)
-        .json(&serde_json::json!(response_struct))
-        .send()?;
+    let patch_response = {
+        let patch_response = client
+            .patch(&request_url)
+            .header(
+                AUTHORIZATION,
+                format!("token {token}", token = config.token),
+            )
+            .header(USER_AGENT, config.owner)
+            .json(&serde_json::json!(repo))
+            .send()?;
 
-    if res.status() != 200 {
-        println!("Error: {}", res.text()?);
-    }
+        if patch_response.status() != 200 {
+            bail!("Error: {}", patch_response.text()?);
+        }
+        let patch_response: Repo = patch_response.json()?;
+        patch_response
+    };
+
+    info!(
+        "Toggled to: {}",
+        if patch_response.private {
+            "private"
+        } else {
+            "public"
+        }
+    );
     Ok(())
 }
 
