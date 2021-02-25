@@ -15,7 +15,7 @@ use text_io::read;
 const TOGIT_CONFIG_FILE_NAME: &str = "default.toml";
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "togit",
+    name = "toggit",
     about = "toggle your github repository private or public"
 )]
 struct Cli {
