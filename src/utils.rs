@@ -53,3 +53,12 @@ pub fn get_client(request_url: &str, config: Config) -> impl Fn(MethodType) -> R
         }
     }
 }
+
+pub fn get_request_url(config: &Config, repos: &str) -> String {
+    let request_url = format!(
+        "https://api.github.com/repos/{owner}/{repo}",
+        owner = config.owner,
+        repo = repos
+    );
+    request_url
+}

@@ -1,16 +1,18 @@
 use std::env;
 
 use anyhow::{bail, Result};
-use args::{get_cli, Toggit};
 use log::info;
 
 use commands::{get_current_visibility, initialize_toggit, toggle};
-mod args;
 mod commands;
+
+use cli::{initialize, Toggit};
+mod cli;
+
 mod utils;
 
 fn main() -> Result<()> {
-    let cli = get_cli();
+    let cli = initialize();
 
     if cli.verbose {
         env::set_var("RUST_LOG", "info")

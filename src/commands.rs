@@ -74,11 +74,7 @@ pub struct Repo {
 pub fn get_current_visibility(config_path: &Path, repos: &str) -> Result<Repo> {
     let config = Config::default().get_config(config_path)?;
 
-    let request_url = format!(
-        "https://api.github.com/repos/{owner}/{repo}",
-        owner = config.owner,
-        repo = repos
-    );
+    let request_url = utils::get_request_url(&config, repos);
 
     let toggit_client = utils::get_client(&request_url, config);
 
@@ -111,11 +107,7 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
 
     let config = Config::default().get_config(config_path)?;
 
-    let request_url = format!(
-        "https://api.github.com/repos/{owner}/{repo}",
-        owner = config.owner,
-        repo = repos
-    );
+    let request_url = utils::get_request_url(&config, repos);
 
     let toggit_client = utils::get_client(&request_url, config);
 

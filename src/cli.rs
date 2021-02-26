@@ -29,6 +29,6 @@ pub enum Toggit {
     },
 }
 
-pub fn get_cli() -> Cli {
+pub fn initialize() -> Cli {
     Cli::from_args()
 }
