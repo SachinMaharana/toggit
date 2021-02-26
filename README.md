@@ -28,7 +28,7 @@
 
 ```bash
 # Get the binary
-wget https://github.com/SachinMaharana/toggit/releases/download/v0.1.0/toggit
+wget https://github.com/SachinMaharana/toggit/releases/download/v0.2.0/toggit
 
 # give permissions
 chmod +x toggit
