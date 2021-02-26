@@ -10,11 +10,11 @@ pub struct Cli {
     pub verbose: bool,
 
     #[structopt(subcommand)]
-    pub cmd: Togit,
+    pub cmd: Toggit,
 }
 #[derive(Debug, StructOpt)]
 #[structopt()]
-pub enum Togit {
+pub enum Toggit {
     #[structopt(about = "Initialize toggit")]
     Init,
     #[structopt(about = "toggle a repo to private or public")]

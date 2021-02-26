@@ -47,7 +47,7 @@ impl Config {
     }
 }
 
-pub fn initialize_togit(config_path: &Path) -> Result<()> {
+pub fn initialize_toggit(config_path: &Path) -> Result<()> {
     let url = "https://github.com/settings/tokens";
     Billboard::default().display(format!("To find your github token, go to {}", url).as_str());
     let token = get_user_input("Enter API Token:\n");
@@ -73,7 +73,7 @@ struct Repo {
 pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
     if !config_path.exists() {
         bail!(
-            "config path does not exist {}. try running `togit init`",
+            "config path does not exist {}. try running `toggit init`",
             config_path.display()
         )
     }

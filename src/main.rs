@@ -1,10 +1,10 @@
 use std::env;
 
 use anyhow::Result;
-use args::{get_cli, Togit};
+use args::{get_cli, Toggit};
 use log::info;
 
-use commands::{initialize_togit, toggle};
+use commands::{initialize_toggit, toggle};
 mod args;
 mod commands;
 mod utils;
@@ -23,8 +23,8 @@ fn main() -> Result<()> {
     info!("starting toggit..");
 
     match cli.cmd {
-        Togit::Init => initialize_togit(&config_path)?,
-        Togit::Toggle { repo } => toggle(&config_path, &repo)?,
+        Toggit::Init => initialize_toggit(&config_path)?,
+        Toggit::Toggle { repo } => toggle(&config_path, &repo)?,
     }
     Ok(())
 }

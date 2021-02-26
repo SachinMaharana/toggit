@@ -9,14 +9,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const TOGIT_CONFIG_FILE_NAME: &str = "default.toml";
+const TOGGIT_CONFIG_FILE_NAME: &str = "default.toml";
 
 pub enum MethodType {
     Get,
     Patch,
 }
 
-fn get_togit_home_dir() -> PathBuf {
+fn get_toggit_home_dir() -> PathBuf {
     if let Ok(value) = env::var("TOGGIT_HOME") {
         log::info!("Using \'TOGGIT_HOME\' {}", value);
         Path::new(&value).to_path_buf()
@@ -24,13 +24,13 @@ fn get_togit_home_dir() -> PathBuf {
         log::info!("did not found \'TOGGIT_HOME\'. using default");
         dirs::home_dir()
             .expect("could not find home directory")
-            .join(".togit")
+            .join(".toggit")
     }
 }
 
 pub fn get_global_config_path() -> PathBuf {
-    let home_dir = get_togit_home_dir();
-    let config_path = home_dir.join("config").join(TOGIT_CONFIG_FILE_NAME);
+    let home_dir = get_toggit_home_dir();
+    let config_path = home_dir.join("config").join(TOGGIT_CONFIG_FILE_NAME);
     log::info!("Using global config file: {}", config_path.display());
     config_path
 }
