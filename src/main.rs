@@ -1,10 +1,10 @@
 use std::env;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use args::{get_cli, Toggit};
 use log::info;
 
-use commands::{initialize_toggit, toggle};
+use commands::{get_current_visibility, initialize_toggit, toggle};
 mod args;
 mod commands;
 mod utils;
@@ -25,6 +25,11 @@ fn main() -> Result<()> {
     match cli.cmd {
         Toggit::Init => initialize_toggit(&config_path)?,
         Toggit::Toggle { repo } => toggle(&config_path, &repo)?,
+        Toggit::Visible { repo } => {
+            if let Err(e) = get_current_visibility(&config_path, &repo) {
+                bail!(e)
+            }
+        }
     }
     Ok(())
 }

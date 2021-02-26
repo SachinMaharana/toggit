@@ -22,6 +22,11 @@ pub enum Toggit {
         #[structopt(name = "repo", required = true)]
         repo: String,
     },
+    #[structopt(about = "get the current visibility of a repo")]
+    Visible {
+        #[structopt(name = "visible", required = true)]
+        repo: String,
+    },
 }
 
 pub fn get_cli() -> Cli {

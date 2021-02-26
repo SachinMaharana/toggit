@@ -66,18 +66,12 @@ fn get_user_input(prompt: &str) -> String {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-struct Repo {
-    private: bool,
+pub struct Repo {
+    #[serde(rename = "private")]
+    visibility: bool,
 }
 
-pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
-    if !config_path.exists() {
-        bail!(
-            "config path does not exist {}. try running `toggit init`",
-            config_path.display()
-        )
-    }
-
+pub fn get_current_visibility(config_path: &Path, repos: &str) -> Result<Repo> {
     let config = Config::default().get_config(config_path)?;
 
     let request_url = format!(
@@ -101,11 +95,34 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
         let response: Repo = response.json()?;
         response
     };
-    let info = ternary!(response.private, "private", "public");
+    let info = ternary!(response.visibility, "private", "public");
     info!("{} visibility: {}", repos, info);
+    eprintln!("{} visibility: {}", repos, info);
+    Ok(response)
+}
+
+pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
+    if !config_path.exists() {
+        bail!(
+            "config path does not exist {}. try running `toggit init`",
+            config_path.display()
+        )
+    }
+
+    let config = Config::default().get_config(config_path)?;
+
+    let request_url = format!(
+        "https://api.github.com/repos/{owner}/{repo}",
+        owner = config.owner,
+        repo = repos
+    );
+
+    let toggit_client = utils::get_client(&request_url, config);
+
+    let current_visibility = get_current_visibility(config_path, repos)?;
 
     let repo = Repo {
-        private: !response.private,
+        visibility: !current_visibility.visibility,
     };
 
     let patch_response = {
@@ -122,7 +139,7 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
         patch_response
     };
 
-    let info = ternary!(patch_response.private, "private", "public");
+    let info = ternary!(patch_response.visibility, "private", "public");
 
     info!("{} visibility toggled to: {}", repos, info);
 
