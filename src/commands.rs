@@ -47,12 +47,13 @@ impl Config {
     }
 }
 
-pub fn initialize_togit(config_path: &Path) -> Result<()> {
+pub fn initialize_togit(config_path: &Path, verbose: bool) -> Result<()> {
     let url = "https://github.com/settings/tokens";
     Billboard::default().display(format!("To find your github token, go to {}", url).as_str());
     let token = get_user_input("Enter API Token:\n");
     let owner = get_user_input("Enter Owner Name:\n");
     let config = Config { token, owner };
+    info!("writing config to file. {:?}", config_path);
     config.to_file(&config_path)?;
     Ok(())
 }
@@ -69,7 +70,7 @@ struct Repo {
     private: bool,
 }
 
-pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
+pub fn toggle(config_path: &Path, repos: &str, verbose: bool) -> Result<()> {
     if !config_path.exists() {
         bail!(
             "config path does not exist {}. try running `togit init`",
@@ -88,22 +89,28 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
     let toggit_client = utils::get_client(&request_url, config);
 
     let response = {
+        info!(
+            "finding the requested repo {repos} in github",
+            repos = repos
+        );
         let response = toggit_client(MethodType::Get).send()?;
         if response.status() != 200 {
             bail!("{}", response.text()?);
         }
+        info!("{} repo found", repos);
         let response: Repo = response.json()?;
         response
     };
     let info = ternary!(response.private, "private", "public");
-
     info!("{}: current: {}", repos, info);
+    info!("{} visibility: {}", repos, info);
 
     let repo = Repo {
         private: !response.private,
     };
 
     let patch_response = {
+        info!("updating visibiltiy of the repo");
         let patch_response = toggit_client(MethodType::Patch)
             .json(&serde_json::json!(repo))
             .send()?;
@@ -111,6 +118,7 @@ pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
         if patch_response.status() != 200 {
             bail!("Error: {}", patch_response.text()?);
         }
+        info!("succesfully updated");
         let patch_response: Repo = patch_response.json()?;
         patch_response
     };
