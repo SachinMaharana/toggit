@@ -18,3 +18,8 @@ serde_json = "1.0.62"
 structopt = "0.3.21"
 text_io = "0.1.8"
 toml = "0.5.8"
+
+[profile.release]
+panic = "abort"
+opt-level = 'z'
+lto = true
