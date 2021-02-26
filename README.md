@@ -22,30 +22,35 @@
 
 ## Getting Started
 
-Download the binary from releases page.
+### Download the binary from releases page.
 
 ```bash
+# Get the binary
 wget https://github.com/SachinMaharana/toggit/releases/download/v0.1.0/toggit
 
+# give permissions
 chmod +x toggit
 
+# copy to bin
 cp toggit /usr/local/bin
 
+# commands available
 toggit -h
 ```
 
 ## Basic Usage
 
-```
+```bash
 # Initialize for the first time
+# Provide API token and github username
 
 toggit init
 
-# Provide API token and github username
+# use toggle command to change visibility
 
 toggit toggle <repo_name>
 
-(verbose mode)
+# (verbose mode)
 toggit -v toggle rkill
 
 ```
