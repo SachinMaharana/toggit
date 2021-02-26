@@ -47,7 +47,7 @@ impl Config {
     }
 }
 
-pub fn initialize_togit(config_path: &Path, verbose: bool) -> Result<()> {
+pub fn initialize_togit(config_path: &Path) -> Result<()> {
     let url = "https://github.com/settings/tokens";
     Billboard::default().display(format!("To find your github token, go to {}", url).as_str());
     let token = get_user_input("Enter API Token:\n");
@@ -70,7 +70,7 @@ struct Repo {
     private: bool,
 }
 
-pub fn toggle(config_path: &Path, repos: &str, verbose: bool) -> Result<()> {
+pub fn toggle(config_path: &Path, repos: &str) -> Result<()> {
     if !config_path.exists() {
         bail!(
             "config path does not exist {}. try running `togit init`",
@@ -102,7 +102,6 @@ pub fn toggle(config_path: &Path, repos: &str, verbose: bool) -> Result<()> {
         response
     };
     let info = ternary!(response.private, "private", "public");
-    info!("{}: current: {}", repos, info);
     info!("{} visibility: {}", repos, info);
 
     let repo = Repo {
@@ -125,8 +124,8 @@ pub fn toggle(config_path: &Path, repos: &str, verbose: bool) -> Result<()> {
 
     let info = ternary!(patch_response.private, "private", "public");
 
-    info!("{}: toggled to: {}", repos, info);
+    info!("{} visibility toggled to: {}", repos, info);
 
-    eprintln!("{} toggled to: {}", repos, info);
+    eprintln!("successfully updated {} visibility: {}", repos, info);
     Ok(())
 }

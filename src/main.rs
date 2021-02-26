@@ -1,4 +1,4 @@
-use std::env::{self, var};
+use std::env;
 
 use anyhow::Result;
 use args::{get_cli, Togit};
