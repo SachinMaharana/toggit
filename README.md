@@ -20,6 +20,8 @@
   </p>
 </p>
 
+![toggit](/assets/toggit.svg)
+
 ## Getting Started
 
 ### Download the binary from releases page.
